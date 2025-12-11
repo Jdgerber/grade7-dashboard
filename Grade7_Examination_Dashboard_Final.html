@@ -1,0 +1,2508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grade 7 November Examination Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Add Chart.js datalabels plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2ecc71;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .subject-performance-highlight {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 2px solid var(--primary);
+        }
+        
+        .subject-performance-highlight h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .subject-performance-highlight .section-description {
+            text-align: center;
+            color: var(--gray);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+        
+        .subject-comparison-chart-wrapper {
+            height: 300px;
+            margin: 0 auto;
+            max-width: 1200px;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 3fr;
+            gap: 20px;
+        }
+        
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            min-height: 600px;
+        }
+        
+        .subject-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .subject-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 2px solid transparent;
+            position: relative;
+        }
+        
+        .subject-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subject-card.active {
+            border-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .subject-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .upload-status {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--gray);
+        }
+        
+        .upload-status.uploaded {
+            background-color: var(--secondary);
+        }
+        
+        .upload-section {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .upload-btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+        
+        .upload-btn:hover {
+            background: #2980b9;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .data-table th {
+            background-color: var(--light);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+        
+        .performance-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .excellent {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+        }
+        
+        .good {
+            background-color: rgba(52, 152, 219, 0.2);
+            color: #2980b9;
+        }
+        
+        .average {
+            background-color: rgba(243, 156, 18, 0.2);
+            color: #d35400;
+        }
+        
+        .poor {
+            background-color: rgba(231, 76, 60, 0.2);
+            color: #c0392b;
+        }
+        
+        .item-analysis {
+            margin-top: 30px;
+        }
+        
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--primary);
+        }
+        
+        .question-number {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .question-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .uploaded-files {
+            margin-top: 20px;
+        }
+        
+        .uploaded-files-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: pointer;
+            padding: 8px 12px;
+            background: var(--light);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .uploaded-files-header:hover {
+            background: #dfe6e9;
+        }
+        
+        .uploaded-files-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+        
+        .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+        
+        .uploaded-files-content {
+            max-height: 300px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+        }
+        
+        .uploaded-files-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        
+        .file-list {
+            list-style-type: none;
+            margin-top: 10px;
+        }
+        
+        .file-item {
+            padding: 8px 12px;
+            background: white;
+            border-radius: 5px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .file-item .file-name {
+            flex-grow: 1;
+            font-size: 0.9rem;
+        }
+        
+        .file-item .file-subject {
+            background: var(--light);
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+        
+        .file-item .file-school {
+            background: var(--light);
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8rem;
+            margin-right: 8px;
+        }
+        
+        .file-item .delete-btn {
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: background 0.3s;
+        }
+        
+        .file-item .delete-btn:hover {
+            background: #c0392b;
+        }
+        
+        .section-header {
+            background-color: var(--light);
+            padding: 10px 15px;
+            margin: 20px 0 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .school-comparison {
+            margin-top: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .subject-performance-highlight {
+                padding: 20px;
+            }
+            
+            .subject-performance-highlight h2 {
+                font-size: 1.5rem;
+            }
+            
+            .subject-comparison-chart-wrapper {
+                height: 250px;
+            }
+            
+            .subject-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .file-item .file-info {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 5px;
+                margin-bottom: 5px;
+            }
+            
+            .file-item .file-actions {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Grade 7 November Examination Dashboard</h1>
+            <p class="subtitle">Comprehensive overview with item analysis and subject comparison</p>
+        </header>
+        
+        <!-- Subject Performance Comparison Section - Prominent Position -->
+        <div class="subject-performance-highlight">
+            <h2>Subject Performance Comparison</h2>
+            <p class="section-description">Average performance across all uploaded subjects</p>
+            <div class="subject-comparison-chart-wrapper">
+                <canvas id="subjectComparisonChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="sidebar">
+                <h2>Subjects</h2>
+                <div class="subject-grid" id="subjectGrid">
+                    <!-- Subject cards will be generated here -->
+                </div>
+                
+                <div class="upload-section">
+                    <h3>Upload Spreadsheets</h3>
+                    <p>Drag & drop or click to upload Excel files</p>
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">📁</div>
+                        <p>Drag & drop Excel files here or click to browse</p>
+                        <div class="upload-btn">Browse Files</div>
+                        <input type="file" id="fileInput" class="file-input" accept=".xlsx, .xls" multiple>
+                    </div>
+                    <p id="selectedFileName" style="margin-top: 10px; font-size: 0.9rem;"></p>
+                </div>
+                
+                <div class="uploaded-files">
+                    <div class="uploaded-files-header" id="uploadedFilesToggle">
+                        <h3>Uploaded Files</h3>
+                        <div class="toggle-icon">▼</div>
+                    </div>
+                    <div class="uploaded-files-content" id="uploadedFilesContent">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <button id="clearAllBtn" class="clear-all-btn" style="padding: 5px 12px; background: var(--danger); color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 0.85rem; display: none;" onclick="confirmClearAll()">Clear All</button>
+                        </div>
+                        <ul class="file-list" id="fileList">
+                            <!-- Uploaded files will be listed here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="main-content">
+                <div id="subjectHeader">
+                    <h2 id="currentSubject">Select a Subject</h2>
+                    <p id="examDate"></p>
+                </div>
+                
+                <div id="noDataMessage" class="no-data">
+                    <p>Please select a subject to view performance analytics</p>
+                </div>
+                
+                <div id="analyticsContent" style="display: none;">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="overview">Overview</div>
+                        <div class="tab" data-tab="item-analysis">Item Analysis</div>
+                        <div class="tab" data-tab="detailed-results">Detailed Results</div>
+                        <div class="tab" data-tab="school-comparison">School Comparison</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="overview-tab">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div>Top 3 Average</div>
+                                <div class="stat-value" id="top3Avg">-</div>
+                                <div>High Performers</div>
+                            </div>
+                            <div class="stat-card">
+                                <div>Middle 3 Average</div>
+                                <div class="stat-value" id="mid3Avg">-</div>
+                                <div>Average Performers</div>
+                            </div>
+                            <div class="stat-card">
+                                <div>Bottom 3 Average</div>
+                                <div class="stat-value" id="bottom3Avg">-</div>
+                                <div>Needs Attention</div>
+                            </div>
+                            <div class="stat-card">
+                                <div>Overall Index</div>
+                                <div class="stat-value" id="overallIndex">-</div>
+                                <div>Performance Index</div>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                        
+                        <div class="chart-container">
+                            <canvas id="sectionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="item-analysis-tab">
+                        <h3>Item Analysis</h3>
+                        <p>Performance breakdown by question</p>
+                        <div id="questionGrid">
+                            <!-- Question cards will be generated here -->
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="detailed-results-tab">
+                        <h3>Detailed Results</h3>
+                        <table class="data-table" id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Section</th>
+                                    <th>Question</th>
+                                    <th>Marks</th>
+                                    <th>Top 3 Avg (%)</th>
+                                    <th>Mid 3 Avg (%)</th>
+                                    <th>Bottom 3 Avg (%)</th>
+                                    <th>Overall Index</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsBody">
+                                <!-- Table rows will be generated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="tab-content" id="school-comparison-tab">
+                        <div class="school-comparison">
+                            <h3>School Performance Comparison</h3>
+                            <p id="schoolComparisonDescription">Select a subject to compare school performance</p>
+                            <div class="chart-container">
+                                <canvas id="schoolChart"></canvas>
+                            </div>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div>Highest Performing School</div>
+                                    <div class="stat-value" id="topSchool">-</div>
+                                    <div id="topSchoolScore">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div>Lowest Performing School</div>
+                                    <div class="stat-value" id="bottomSchool">-</div>
+                                    <div id="bottomSchoolScore">-</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div>Average Across Schools</div>
+                                    <div class="stat-value" id="avgSchoolScore">-</div>
+                                    <div>Mean Performance</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div>Schools Compared</div>
+                                    <div class="stat-value" id="schoolCount">-</div>
+                                    <div>Total Schools</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Subject data
+        const subjects = [
+            { id: 'ems', name: 'EMS', icon: '💼', color: '#3498db' },
+            { id: 'english_fal', name: 'ENGLISH FAL', icon: '📖', color: '#e74c3c' },
+            { id: 'ss_geography', name: 'SS GEOGRAPHY', icon: '🌍', color: '#2ecc71' },
+            { id: 'natural_sciences', name: 'NATURAL SCIENCES', icon: '🔬', color: '#9b59b6' },
+            { id: 'ss_history', name: 'SS HISTORY', icon: '📜', color: '#f39c12' },
+            { id: 'afrikaans_hl', name: 'AFRIKAANS HL', icon: '🇿🇦', color: '#1abc9c' },
+            { id: 'math_p1', name: 'MATH P1', icon: '➕', color: '#34495e' },
+            { id: 'math_p2', name: 'MATH P2', icon: '✖️', color: '#7f8c8d' },
+            { id: 'isixhosa_hl', name: 'isiXHOSA HL', icon: '🗣️', color: '#e67e22' }
+        ];
+
+        // Store uploaded data by subject
+        let uploadedData = {};
+        let currentSubject = null;
+        let performanceChart = null;
+        let sectionChart = null;
+        let schoolChart = null;
+        let subjectComparisonChart = null;
+        let uploadedFiles = [];
+        let schoolPerformance = {};
+        let subjectPerformance = {};
+        let uploadedFilesCollapsed = false; // Track collapse state
+
+        // Function to round numbers up to whole numbers
+        function roundUpToWhole(number) {
+            return Math.ceil(number);
+        }
+
+        // Register Chart.js plugins
+        Chart.register(ChartDataLabels);
+
+        // Toggle uploaded files section
+        function toggleUploadedFiles() {
+            const content = document.getElementById('uploadedFilesContent');
+            const toggleIcon = document.querySelector('#uploadedFilesToggle .toggle-icon');
+            
+            uploadedFilesCollapsed = !uploadedFilesCollapsed;
+            
+            if (uploadedFilesCollapsed) {
+                content.classList.add('collapsed');
+                toggleIcon.textContent = '▶';
+                toggleIcon.style.transform = 'rotate(-90deg)';
+            } else {
+                content.classList.remove('collapsed');
+                toggleIcon.textContent = '▼';
+                toggleIcon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Save state to localStorage
+        function saveState() {
+            try {
+                const state = {
+                    uploadedFiles: uploadedFiles,
+                    uploadedData: uploadedData,
+                    currentSubject: currentSubject,
+                    schoolPerformance: schoolPerformance,
+                    subjectPerformance: subjectPerformance,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem('examDashboardState', JSON.stringify(state));
+                console.log('State saved to localStorage');
+            } catch (error) {
+                console.error('Error saving state:', error);
+            }
+        }
+
+        // Load state from localStorage
+        function loadState() {
+            try {
+                const savedState = localStorage.getItem('examDashboardState');
+                if (!savedState) {
+                    console.log('No saved state found');
+                    return false;
+                }
+                
+                const state = JSON.parse(savedState);
+                console.log('Loading saved state from:', state.timestamp);
+                
+                // Restore data
+                uploadedFiles = state.uploadedFiles || [];
+                uploadedData = state.uploadedData || {};
+                currentSubject = state.currentSubject || null;
+                schoolPerformance = state.schoolPerformance || {};
+                subjectPerformance = state.subjectPerformance || {};
+                
+                // Update UI with restored data
+                updateFileList();
+                
+                // Update subject cards to show uploaded status
+                uploadedFiles.forEach(file => {
+                    updateSubjectStatus(file.subject);
+                });
+                
+                // Update overview
+                updateSubjectComparison();
+                
+                // If there was a selected subject, restore it
+                if (currentSubject && uploadedData[currentSubject]) {
+                    selectSubject(currentSubject);
+                }
+                
+                console.log('State restored successfully');
+                return true;
+            } catch (error) {
+                console.error('Error loading state:', error);
+                return false;
+            }
+        }
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            try {
+                const dataToSave = {
+                    uploadedData: uploadedData,
+                    uploadedFiles: uploadedFiles,
+                    subjectPerformance: subjectPerformance,
+                    schoolPerformance: schoolPerformance,
+                    currentSubject: currentSubject,
+                    timestamp: new Date().toISOString()
+                };
+                
+                localStorage.setItem('examDashboardData', JSON.stringify(dataToSave));
+                console.log('✅ Data saved to localStorage');
+            } catch (error) {
+                console.error('❌ Error saving to localStorage:', error);
+                // If quota exceeded, try to clear old data
+                if (error.name === 'QuotaExceededError') {
+                    console.warn('LocalStorage quota exceeded. Data may be too large.');
+                    alert('Warning: Storage limit reached. Some data may not be saved.');
+                }
+            }
+        }
+        
+        // Load data from localStorage
+        function loadFromLocalStorage() {
+            try {
+                const savedData = localStorage.getItem('examDashboardData');
+                if (!savedData) {
+                    console.log('No saved data found in localStorage');
+                    return false;
+                }
+                
+                const parsed = JSON.parse(savedData);
+                
+                // Restore all data
+                uploadedData = parsed.uploadedData || {};
+                uploadedFiles = parsed.uploadedFiles || [];
+                subjectPerformance = parsed.subjectPerformance || {};
+                schoolPerformance = parsed.schoolPerformance || [];
+                currentSubject = parsed.currentSubject || null;
+                
+                console.log('✅ Data loaded from localStorage');
+                console.log(`📊 Restored ${uploadedFiles.length} files`);
+                console.log(`📅 Last saved: ${parsed.timestamp}`);
+                
+                // Update the UI
+                updateFileList();
+                subjects.forEach(subject => updateSubjectStatus(subject.id));
+                updateSubjectComparison();
+                
+                // If there was a current subject selected, show it
+                if (currentSubject && uploadedData[currentSubject]) {
+                    selectSubject(currentSubject);
+                }
+                
+                return true;
+            } catch (error) {
+                console.error('❌ Error loading from localStorage:', error);
+                return false;
+            }
+        }
+
+        // Clear saved state (optional utility function)
+        function clearState() {
+            localStorage.removeItem('examDashboardState');
+            console.log('State cleared from localStorage');
+        }
+
+        // Initialize the dashboard
+        function initDashboard() {
+            console.log("Initializing dashboard...");
+            renderSubjectCards();
+            setupEventListeners();
+            
+            // Initialize empty data for each subject
+            subjects.forEach(subject => {
+                if (!uploadedData[subject.id]) {
+                    uploadedData[subject.id] = null;
+                }
+                if (!subjectPerformance[subject.id]) {
+                    subjectPerformance[subject.id] = {
+                        name: subject.name,
+                        average: 0,
+                        uploaded: false
+                    };
+                }
+            });
+            
+            // Try to load from localStorage first
+            const dataLoaded = loadFromLocalStorage();
+            
+            // If no data in localStorage, try to load saved state (legacy)
+            if (!dataLoaded) {
+                const stateLoaded = loadState();
+                console.log("Dashboard initialized" + (stateLoaded ? " with saved state" : ""));
+            } else {
+                console.log("Dashboard initialized with data from localStorage");
+            }
+        }
+
+        // Render subject cards
+        function renderSubjectCards() {
+            const subjectGrid = document.getElementById('subjectGrid');
+            subjectGrid.innerHTML = '';
+            
+            subjects.forEach(subject => {
+                const card = document.createElement('div');
+                card.className = 'subject-card';
+                card.dataset.id = subject.id;
+                card.innerHTML = `
+                    <div class="subject-icon">${subject.icon}</div>
+                    <h3>${subject.name}</h3>
+                    <div class="upload-status ${uploadedData[subject.id] ? 'uploaded' : ''}"></div>
+                `;
+                subjectGrid.appendChild(card);
+            });
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Subject card clicks
+            document.querySelectorAll('.subject-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    selectSubject(this.dataset.id);
+                });
+            });
+            
+            // File upload
+            document.getElementById('uploadArea').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+            
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            
+            // Drag and drop functionality
+            const uploadArea = document.getElementById('uploadArea');
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = 'rgba(52, 152, 219, 0.2)';
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.backgroundColor = '';
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    processFiles(files);
+                }
+            });
+            
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all tab content
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Show the selected tab content
+                    const tabId = this.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    // If school comparison tab is selected, update the chart
+                    if (tabId === 'school-comparison') {
+                        updateSchoolComparison();
+                    }
+                });
+            });
+            
+            // Uploaded files toggle
+            document.getElementById('uploadedFilesToggle').addEventListener('click', toggleUploadedFiles);
+        }
+
+        // Handle file upload
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            if (files.length === 0) return;
+            
+            console.log("Files selected:", files.length);
+            processFiles(files);
+        }
+
+        // Process uploaded files
+        function processFiles(files) {
+            Array.from(files).forEach(file => {
+                console.log("=== PROCESSING FILE ===");
+                console.log("File name:", file.name);
+                console.log("File size:", file.size);
+                console.log("File type:", file.type);
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        console.log("File read successfully, size:", e.target.result.byteLength);
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        
+                        console.log("Workbook SheetNames:", workbook.SheetNames);
+                        
+                        // Process the first sheet
+                        const firstSheetName = workbook.SheetNames[0];
+                        console.log("Processing sheet:", firstSheetName);
+                        const firstSheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                        
+                        console.log("Raw Excel data (first 10 rows):", jsonData.slice(0, 10));
+                        
+                        // Determine the subject based on filename
+                        const subjectId = determineSubject(file.name);
+                        console.log("Determined subject ID:", subjectId);
+                        
+                        if (!subjectId) {
+                            const errorMsg = `Could not determine subject for file: ${file.name}. Please check the filename contains the subject name (EMS, NS, Natural Sciences, etc.).`;
+                            console.error(errorMsg);
+                            alert(errorMsg);
+                            return;
+                        }
+                        
+                        // Parse the data according to the specific format
+                        const parsedData = parseUniversalData(jsonData);
+                        console.log("Parsed data structure:", {
+                            school: parsedData.school,
+                            subject: parsedData.subject,
+                            sectionsCount: parsedData.sections.length,
+                            totalQuestions: parsedData.sections.reduce((sum, sec) => sum + sec.questions.length, 0)
+                        });
+                        
+                        // Store the data
+                        uploadedData[subjectId] = parsedData;
+                        
+                        // Add to uploaded files list
+                        uploadedFiles.push({
+                            name: file.name,
+                            subject: subjectId,
+                            school: parsedData.school,
+                            data: parsedData
+                        });
+                        
+                        // Update school performance data
+                        updateSchoolPerformance(parsedData);
+                        
+                        // Update subject performance data
+                        updateSubjectPerformance(subjectId, parsedData);
+                        
+                        updateFileList();
+                        updateSubjectStatus(subjectId);
+                        
+                        // Update subject comparison chart
+                        updateSubjectComparison();
+                        
+                        // If this is the current subject, update the display
+                        if (currentSubject === subjectId) {
+                            showAnalytics(subjectId);
+                        }
+                        
+                        // Save to localStorage after successful upload
+                        saveToLocalStorage();
+                        
+                        console.log(`✅ Successfully processed ${file.name} for subject ${subjectId}`);
+                        console.log("Current uploaded subjects:", Object.keys(uploadedData).filter(k => uploadedData[k]));
+                        console.log("Subject performance data:", Object.entries(subjectPerformance).filter(([k, v]) => v.uploaded));
+                        
+                        // Save state to localStorage
+                        saveState();
+                        
+                    } catch (error) {
+                        console.error("❌ Error processing file:", error);
+                        alert(`Error processing file ${file.name}: ${error.message}`);
+                    }
+                };
+                reader.onerror = function(e) {
+                    console.error("❌ File reading error:", e);
+                    alert(`Error reading file ${file.name}`);
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // UNIVERSAL PARSER THAT HANDLES ALL SUBJECT FORMATS
+        function parseUniversalData(jsonData) {
+            const parsedData = {
+                school: '',
+                subject: '',
+                sections: []
+            };
+            
+            // Extract school and subject - handle different formats
+            for (let i = 0; i < Math.min(3, jsonData.length); i++) {
+                const row = jsonData[i];
+                if (!row || row.length === 0) continue;
+                
+                // Check for subject line (various formats)
+                if (row[0] && typeof row[0] === 'string') {
+                    const cellValue = row[0].toString().trim();
+                    
+                    // Extract subject (multiple formats)
+                    if (cellValue.startsWith('Subject:') || cellValue.startsWith('Subject :')) {
+                        parsedData.subject = cellValue.replace('Subject:', '').replace('Subject :', '').trim();
+                    }
+                    // Extract school (multiple formats)  
+                    else if (cellValue.startsWith('School:') || cellValue.startsWith('School :') || cellValue.startsWith('School name:')) {
+                        parsedData.school = cellValue.replace('School:', '').replace('School :', '').replace('School name:', '').trim();
+                    }
+                }
+                
+                // Also check column B for school/subject (Natural Sciences format)
+                if (row[1] && typeof row[1] === 'string') {
+                    const cellValue = row[1].toString().trim();
+                    if (cellValue && !parsedData.school && (cellValue.includes('SKOOL') || cellValue.includes('PRIM'))) {
+                        parsedData.school = cellValue;
+                    }
+                    if (cellValue && !parsedData.subject && (cellValue.includes('Science') || cellValue.includes('History') || cellValue.includes('EMS'))) {
+                        parsedData.subject = cellValue;
+                    }
+                }
+            }
+            
+            console.log("Extracted school:", parsedData.school);
+            console.log("Extracted subject:", parsedData.subject);
+            
+            // Find the header row (contains "Section", "Question No.", "Marks")
+            // Support two formats:
+            // Format 1: Section(col 0), Question(col 1), Marks(col 2)
+            // Format 2 (Math P2): Paper(col 0), Section(col 1), Question(col 2), Marks(col 3)
+            let headerRowIndex = -1;
+            let columnOffset = 0; // 0 for standard format, 1 for Math P2 format
+            
+            for (let i = 0; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (row && row.length >= 3) {
+                    // Check for standard format (Section in col 0)
+                    const hasSection0 = row[0] && row[0].toString().includes('Section');
+                    const hasQuestionNo1 = row[1] && row[1].toString().includes('Question');
+                    const hasMarks2 = row[2] && row[2].toString().includes('Marks');
+                    
+                    if (hasSection0 && hasQuestionNo1 && hasMarks2) {
+                        headerRowIndex = i;
+                        columnOffset = 0;
+                        console.log("Detected standard format (Section in column A)");
+                        break;
+                    }
+                    
+                    // Check for Math P2 format (Paper in col 0, Section in col 1)
+                    if (row.length >= 4) {
+                        const hasPaper0 = row[0] && row[0].toString().includes('Paper');
+                        const hasSection1 = row[1] && row[1].toString().includes('Section');
+                        const hasQuestionNo2 = row[2] && row[2].toString().includes('Question');
+                        const hasMarks3 = row[3] && row[3].toString().includes('Marks');
+                        
+                        if (hasPaper0 && hasSection1 && hasQuestionNo2 && hasMarks3) {
+                            headerRowIndex = i;
+                            columnOffset = 1;
+                            console.log("Detected Math P2 format (Paper in column A, Section in column B)");
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (headerRowIndex === -1) {
+                console.error("Could not find header row");
+                return parsedData;
+            }
+            
+            console.log(`Using column offset: ${columnOffset}`);
+            
+            // Extract section data - start from row after header
+            let currentSection = null;
+            
+            for (let i = headerRowIndex + 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length < 3) continue;
+                
+                // Check if this is a section header (various formats)
+                // For standard format: check column A (index 0)
+                // For Math P2 format: check column B (index 1)
+                const sectionCell = row[0 + columnOffset] ? row[0 + columnOffset].toString().trim() : '';
+                const isNewSection = sectionCell && (
+                    sectionCell.startsWith('Question') || 
+                    sectionCell.startsWith('A') || 
+                    sectionCell.startsWith('B') ||
+                    sectionCell.startsWith('Q') ||
+                    (sectionCell.includes(':') && !sectionCell.includes('.')) // Contains colon but not dot (like "A1: Multi Choice")
+                );
+                
+                if (isNewSection) {
+                    if (currentSection && currentSection.questions.length > 0) {
+                        parsedData.sections.push(currentSection);
+                    }
+                    
+                    currentSection = {
+                        name: sectionCell,
+                        questions: []
+                    };
+                    console.log("Found section:", sectionCell);
+                }
+                
+                // Check if this is a question row (has question number like 1.1, 2.1, etc.)
+                // Column B for standard format, Column C for Math P2
+                // This check happens regardless of whether we just found a new section
+                const questionCol = 1 + columnOffset;
+                if (row[questionCol] && (typeof row[questionCol] === 'string' || typeof row[questionCol] === 'number')) {
+                    const questionStr = row[questionCol].toString().trim();
+                    
+                    // Skip the total row and empty rows
+                    if (questionStr === 'Total' || questionStr === 'Totaal:' || questionStr === '' || 
+                        questionStr === 'How to Use and Interpret This Grid:' ||
+                        questionStr === 'Opsomming van Questionpunte:') continue;
+                    
+                    // Check if it's a valid question number (contains a dot or is a number or letter like 7A/7B)
+                    if ((questionStr.includes('.') && !isNaN(parseFloat(questionStr))) || 
+                        !isNaN(parseFloat(questionStr)) ||
+                        /^[0-9]+[A-Za-z]/.test(questionStr) || // Matches "7A/7B" type
+                        questionStr.includes('/')) {
+                        
+                        if (currentSection) {
+                            // Parse marks - handle both numbers and formulas
+                            // Apply columnOffset: standard format has marks in col 2, Math P2 has marks in col 3
+                            let marksValue = 0;
+                            const marksCol = 2 + columnOffset;
+                            if (typeof row[marksCol] === 'number') {
+                                marksValue = row[marksCol];
+                            } else if (typeof row[marksCol] === 'string') {
+                                marksValue = parseFloat(row[marksCol]) || 0;
+                            }
+                            
+                            // Parse student scores - handle variable number of students
+                            // Apply columnOffset: standard has students in D-L (3-11), Math P2 has students in E-M (4-12)
+                            const top3 = [];
+                            const mid3 = [];
+                            const bottom3 = [];
+                            
+                            // Top students (columns D-F for standard, E-G for Math P2)
+                            for (let j = 3 + columnOffset; j <= 5 + columnOffset; j++) {
+                                if (j < row.length && row[j] !== null && row[j] !== undefined && row[j] !== '') {
+                                    top3.push(parseFloat(row[j]) || 0);
+                                }
+                            }
+                            
+                            // Middle students (columns G-I for standard, H-J for Math P2)
+                            for (let j = 6 + columnOffset; j <= 8 + columnOffset; j++) {
+                                if (j < row.length && row[j] !== null && row[j] !== undefined && row[j] !== '') {
+                                    mid3.push(parseFloat(row[j]) || 0);
+                                }
+                            }
+                            
+                            // Bottom students (columns J-L for standard, K-M for Math P2)
+                            for (let j = 9 + columnOffset; j <= 11 + columnOffset; j++) {
+                                if (j < row.length && row[j] !== null && row[j] !== undefined && row[j] !== '') {
+                                    bottom3.push(parseFloat(row[j]) || 0);
+                                }
+                            }
+                            
+                            // If no students found, try to find them in other columns
+                            if (top3.length === 0 && row.length > (3 + columnOffset)) {
+                                for (let j = 3 + columnOffset; j < Math.min(6 + columnOffset, row.length); j++) {
+                                    if (row[j] !== null && row[j] !== undefined && row[j] !== '') {
+                                        top3.push(parseFloat(row[j]) || 0);
+                                    }
+                                }
+                            }
+                            
+                            const question = {
+                                number: questionStr,
+                                marks: marksValue,
+                                top3: top3,
+                                mid3: mid3,
+                                bottom3: bottom3,
+                                top3Avg: 0,
+                                mid3Avg: 0,
+                                bottom3Avg: 0,
+                                overallIndex: 0
+                            };
+                            
+                            // Read the calculated averages from the spreadsheet if available
+                            // Column M (index 12) or N (index 13) for Math P2: Top 3 Avg
+                            // Column N (index 13) or O (index 14) for Math P2: Mid 3 Avg  
+                            // Column O (index 14) or P (index 15) for Math P2: Bottom 3 Avg
+                            // Column P (index 15) or Q (index 16) for Math P2: Overall Index
+                            
+                            const top3AvgCol = 12 + columnOffset;
+                            if (row.length > top3AvgCol && row[top3AvgCol] !== null && row[top3AvgCol] !== undefined && row[top3AvgCol] !== '') {
+                                let value = row[top3AvgCol];
+                                if (typeof value === 'string' && value.trim().startsWith('=')) {
+                                    value = NaN; // Formula, calculate instead
+                                } else {
+                                    value = parseFloat(value);
+                                }
+                                if (!isNaN(value)) {
+                                    question.top3Avg = roundUpToWhole(value);
+                                } else {
+                                    question.top3Avg = roundUpToWhole(calculateAverage(question.top3, question.marks));
+                                }
+                            } else {
+                                question.top3Avg = roundUpToWhole(calculateAverage(question.top3, question.marks));
+                            }
+                            
+                            const mid3AvgCol = 13 + columnOffset;
+                            if (row.length > mid3AvgCol && row[mid3AvgCol] !== null && row[mid3AvgCol] !== undefined && row[mid3AvgCol] !== '') {
+                                let value = row[mid3AvgCol];
+                                if (typeof value === 'string' && value.trim().startsWith('=')) {
+                                    value = NaN; // Formula, calculate instead
+                                } else {
+                                    value = parseFloat(value);
+                                }
+                                if (!isNaN(value)) {
+                                    question.mid3Avg = roundUpToWhole(value);
+                                } else {
+                                    question.mid3Avg = roundUpToWhole(calculateAverage(question.mid3, question.marks));
+                                }
+                            } else {
+                                question.mid3Avg = roundUpToWhole(calculateAverage(question.mid3, question.marks));
+                            }
+                            
+                            const bottom3AvgCol = 14 + columnOffset;
+                            if (row.length > bottom3AvgCol && row[bottom3AvgCol] !== null && row[bottom3AvgCol] !== undefined && row[bottom3AvgCol] !== '') {
+                                let value = row[bottom3AvgCol];
+                                if (typeof value === 'string' && value.trim().startsWith('=')) {
+                                    value = NaN; // Formula, calculate instead
+                                } else {
+                                    value = parseFloat(value);
+                                }
+                                if (!isNaN(value)) {
+                                    question.bottom3Avg = roundUpToWhole(value);
+                                } else {
+                                    question.bottom3Avg = roundUpToWhole(calculateAverage(question.bottom3, question.marks));
+                                }
+                            } else {
+                                question.bottom3Avg = roundUpToWhole(calculateAverage(question.bottom3, question.marks));
+                            }
+                            
+                            // Most importantly: Read Overall Index from column P (index 15) or Q (index 16) for Math P2
+                            const overallIndexCol = 15 + columnOffset;
+                            
+                            if (row.length > overallIndexCol && row[overallIndexCol] !== null && row[overallIndexCol] !== undefined && row[overallIndexCol] !== '') {
+                                let value = row[overallIndexCol];
+                                
+                                // If it's a string (might be a formula), try to parse it
+                                if (typeof value === 'string') {
+                                    // Check if it's a formula (starts with =)
+                                    if (value.trim().startsWith('=')) {
+                                        console.log(`Question ${questionStr}: Column ${String.fromCharCode(65 + overallIndexCol)} contains formula "${value}", will calculate from averages`);
+                                        value = NaN; // Mark as invalid
+                                    } else {
+                                        value = parseFloat(value);
+                                    }
+                                }
+                                
+                                // Check if we got a valid number
+                                if (!isNaN(value) && typeof value === 'number') {
+                                    question.overallIndex = roundUpToWhole(value);
+                                    console.log(`Question ${questionStr}: Using Overall Index from sheet column ${String.fromCharCode(65 + overallIndexCol)}: ${question.overallIndex}%`);
+                                } else {
+                                    // Fallback: calculate from the three averages
+                                    const validAverages = [question.top3Avg, question.mid3Avg, question.bottom3Avg].filter(avg => !isNaN(avg) && avg > 0);
+                                    question.overallIndex = validAverages.length > 0 ? roundUpToWhole(validAverages.reduce((sum, avg) => sum + avg, 0) / validAverages.length) : 0;
+                                    console.log(`Question ${questionStr}: Calculated Overall Index (no valid sheet value): ${question.overallIndex}%`);
+                                }
+                            } else {
+                                // Fallback: calculate from the three averages
+                                const validAverages = [question.top3Avg, question.mid3Avg, question.bottom3Avg].filter(avg => !isNaN(avg) && avg > 0);
+                                question.overallIndex = validAverages.length > 0 ? roundUpToWhole(validAverages.reduce((sum, avg) => sum + avg, 0) / validAverages.length) : 0;
+                                console.log(`Question ${questionStr}: Calculated Overall Index (no column ${String.fromCharCode(65 + overallIndexCol)}): ${question.overallIndex}%`);
+                            }
+                            
+                            currentSection.questions.push(question);
+                            console.log(`Added question ${questionStr} with ${marksValue} marks, students: T${top3.length} M${mid3.length} B${bottom3.length}`);
+                        }
+                    }
+                }
+            }
+            
+            // Add the last section
+            if (currentSection && currentSection.questions.length > 0) {
+                parsedData.sections.push(currentSection);
+            }
+            
+            // Look for the TOTAL row to get the overall average
+            // This is more reliable than trying to read formulas
+            // Check both column A (standard format) and column B (Math P2 format)
+            let totalRowOverallIndex = null;
+            for (let i = 0; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                // Check column A
+                if (row[0] && typeof row[0] === 'string') {
+                    const cellValue = row[0].toString().trim().toUpperCase();
+                    if (cellValue === 'TOTAL' || cellValue === 'TOTAAL' || cellValue === 'TOTAAL:') {
+                        // Found the TOTAL row - read Overall Index from column P (index 15)
+                        if (row.length > 15 && row[15] !== null && row[15] !== undefined && row[15] !== '') {
+                            const value = parseFloat(row[15]);
+                            if (!isNaN(value) && value >= 0 && value <= 100) {
+                                totalRowOverallIndex = roundUpToWhole(value);
+                                console.log(`Found TOTAL row (column A) with Overall Index in column P: ${totalRowOverallIndex}%`);
+                                break;
+                            }
+                        }
+                    }
+                }
+                // Check column B (Math P2 format)
+                if (row[1] && typeof row[1] === 'string') {
+                    const cellValue = row[1].toString().trim().toUpperCase();
+                    if (cellValue === 'TOTAL' || cellValue === 'TOTAAL' || cellValue === 'TOTAAL:') {
+                        // Found the TOTAL row - read Overall Index from column Q (index 16) for Math P2
+                        if (row.length > 16 && row[16] !== null && row[16] !== undefined && row[16] !== '') {
+                            const value = parseFloat(row[16]);
+                            if (!isNaN(value) && value >= 0 && value <= 100) {
+                                totalRowOverallIndex = roundUpToWhole(value);
+                                console.log(`Found TOTAL row (column B - Math P2 format) with Overall Index in column Q: ${totalRowOverallIndex}%`);
+                                break;
+                            }
+                        }
+                        // If no Overall Index in column Q, calculate from the three group averages
+                        else if (row.length > 13 && row.length > 14 && row.length > 15) {
+                            const top3Avg = parseFloat(row[13]);
+                            const mid3Avg = parseFloat(row[14]);
+                            const bottom3Avg = parseFloat(row[15]);
+                            if (!isNaN(top3Avg) && !isNaN(mid3Avg) && !isNaN(bottom3Avg)) {
+                                totalRowOverallIndex = roundUpToWhole((top3Avg + mid3Avg + bottom3Avg) / 3);
+                                console.log(`Found TOTAL row (column B) - calculated Overall Index from averages: ${totalRowOverallIndex}%`);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // If we found a TOTAL row Overall Index, apply it to all questions proportionally
+            // OR store it separately for use in calculations
+            if (totalRowOverallIndex !== null) {
+                parsedData.totalOverallIndex = totalRowOverallIndex;
+                console.log(`Using Overall Index from TOTAL row: ${totalRowOverallIndex}%`);
+            } else {
+                // No TOTAL row found - calculate from all questions
+                console.log(`⚠️  No TOTAL row found - will calculate average from individual question Overall Index values`);
+                if (parsedData.sections.length > 0) {
+                    let allQuestions = [];
+                    parsedData.sections.forEach(section => {
+                        allQuestions = allQuestions.concat(section.questions);
+                    });
+                    
+                    if (allQuestions.length > 0) {
+                        const totalOverall = allQuestions.reduce((sum, q) => sum + q.overallIndex, 0);
+                        parsedData.totalOverallIndex = roundUpToWhole(totalOverall / allQuestions.length);
+                        console.log(`✓ Calculated Overall Index from ${allQuestions.length} questions: ${parsedData.totalOverallIndex}%`);
+                    }
+                }
+            }
+            
+            console.log(`Parsed ${parsedData.sections.length} sections with ${parsedData.sections.reduce((sum, sec) => sum + sec.questions.length, 0)} total questions`);
+            return parsedData;
+        }
+
+        // IMPROVED Calculate average percentage for a group
+        function calculateAverage(values, maxMark) {
+            if (!values || values.length === 0) return 0;
+            
+            const sum = values.reduce((total, val) => total + (parseFloat(val) || 0), 0);
+            const maxTotal = parseFloat(maxMark) * values.length;
+            return maxTotal > 0 ? (sum / maxTotal) * 100 : 0;
+        }
+
+        // Update subject performance data
+        function updateSubjectPerformance(subjectId, data) {
+            // Get all files for this subject
+            const subjectFiles = uploadedFiles.filter(file => file.subject === subjectId);
+            
+            if (subjectFiles.length === 0) {
+                console.log(`No files found for ${subjectId}`);
+                return;
+            }
+            
+            // Calculate average performance across all files for this subject
+            let totalPerformance = 0;
+            let fileCount = 0;
+            
+            subjectFiles.forEach(file => {
+                const fileData = file.data;
+                if (!fileData || !fileData.sections) {
+                    return; // Skip invalid file data
+                }
+                
+                // PRIORITY 1: Use totalOverallIndex from TOTAL row if available
+                if (fileData.totalOverallIndex !== undefined && fileData.totalOverallIndex !== null) {
+                    totalPerformance += fileData.totalOverallIndex;
+                    fileCount++;
+                    console.log(`Using TOTAL row Overall Index for file: ${fileData.totalOverallIndex}%`);
+                } else {
+                    // FALLBACK: Calculate from individual questions
+                    let allQuestions = [];
+                    fileData.sections.forEach(section => {
+                        allQuestions = allQuestions.concat(section.questions);
+                    });
+                    
+                    if (allQuestions.length > 0) {
+                        const filePerformance = allQuestions.reduce((sum, q) => sum + q.overallIndex, 0) / allQuestions.length;
+                        totalPerformance += filePerformance;
+                        fileCount++;
+                        console.log(`Calculated Overall Index from questions: ${filePerformance}%`);
+                    }
+                }
+            });
+            
+            if (fileCount === 0) {
+                console.log(`No valid questions found for ${subjectId}`);
+                return;
+            }
+            
+            const overallPerformance = roundUpToWhole(totalPerformance / fileCount);
+            
+            // Update subject performance
+            subjectPerformance[subjectId].average = overallPerformance;
+            subjectPerformance[subjectId].uploaded = true;
+            
+            console.log(`Updated ${subjectId} performance: ${overallPerformance}% (averaged across ${fileCount} file(s))`);
+        }
+
+        // Update school performance data
+        function updateSchoolPerformance(data) {
+            if (!data || !data.school) return;
+            
+            const schoolName = data.school;
+            const subjectId = data.subject;
+            
+            // Initialize school if not exists
+            if (!schoolPerformance[schoolName]) {
+                schoolPerformance[schoolName] = {
+                    subjects: {},
+                    overallAverage: 0
+                };
+            }
+            
+            // Calculate average for this subject across all files from this school
+            const schoolSubjectFiles = uploadedFiles.filter(file => 
+                file.school === schoolName && file.subject === subjectId
+            );
+            
+            if (schoolSubjectFiles.length === 0) return;
+            
+            let totalPerformance = 0;
+            let validFileCount = 0;
+            
+            schoolSubjectFiles.forEach(file => {
+                const fileData = file.data;
+                if (!fileData || !fileData.sections) return;
+                
+                // PRIORITY 1: Use totalOverallIndex from TOTAL row if available
+                if (fileData.totalOverallIndex !== undefined && fileData.totalOverallIndex !== null) {
+                    totalPerformance += fileData.totalOverallIndex;
+                    validFileCount++;
+                } else {
+                    // FALLBACK: Calculate from individual questions
+                    let allQuestions = [];
+                    fileData.sections.forEach(section => {
+                        allQuestions = allQuestions.concat(section.questions);
+                    });
+                    
+                    if (allQuestions.length > 0) {
+                        const filePerformance = allQuestions.reduce((sum, q) => sum + q.overallIndex, 0) / allQuestions.length;
+                        totalPerformance += filePerformance;
+                        validFileCount++;
+                    }
+                }
+            });
+            
+            if (validFileCount > 0) {
+                // Store the average for this subject at this school
+                schoolPerformance[schoolName].subjects[subjectId] = roundUpToWhole(totalPerformance / validFileCount);
+                
+                // Recalculate overall average for the school across all subjects
+                const subjectCount = Object.keys(schoolPerformance[schoolName].subjects).length;
+                const totalSubjectPerformance = Object.values(schoolPerformance[schoolName].subjects).reduce((sum, perf) => sum + perf, 0);
+                schoolPerformance[schoolName].overallAverage = roundUpToWhole(totalSubjectPerformance / subjectCount);
+                
+                console.log(`Updated school ${schoolName} for subject ${subjectId}: ${roundUpToWhole(totalPerformance / validFileCount)}% (averaged across ${validFileCount} file(s))`);
+            }
+        }
+
+        // Update subject comparison chart
+        function updateSubjectComparison() {
+            const ctx = document.getElementById('subjectComparisonChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (subjectComparisonChart) {
+                subjectComparisonChart.destroy();
+            }
+            
+            // Prepare data for the chart - only show subjects with uploaded data
+            const subjectNames = [];
+            const subjectAverages = [];
+            const subjectColors = [];
+            
+            subjects.forEach(subject => {
+                if (subjectPerformance[subject.id].uploaded) {
+                    subjectNames.push(subject.name);
+                    subjectAverages.push(subjectPerformance[subject.id].average);
+                    
+                    // Color code based on performance
+                    const score = subjectPerformance[subject.id].average;
+                    if (score >= 80) subjectColors.push('rgba(46, 204, 113, 0.7)');
+                    else if (score >= 70) subjectColors.push('rgba(52, 152, 219, 0.7)');
+                    else if (score >= 60) subjectColors.push('rgba(243, 156, 18, 0.7)');
+                    else subjectColors.push('rgba(231, 76, 60, 0.7)');
+                }
+            });
+            
+            console.log('Subject comparison data:', subjectNames, subjectAverages);
+            
+            if (subjectNames.length === 0) {
+                document.getElementById('subjectComparisonChart').innerHTML = '<p class="no-data">Upload subject files to see comparison</p>';
+                return;
+            }
+            
+            // Create chart
+            subjectComparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: subjectNames,
+                    datasets: [{
+                        label: 'Average Performance (%)',
+                        data: subjectAverages,
+                        backgroundColor: subjectColors,
+                        borderColor: subjectColors.map(color => color.replace('0.7', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Subject Performance Comparison'
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return value + '%';
+                            },
+                            color: '#2c3e50',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Average Performance (%)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        // Update uploaded files list with delete buttons
+        function updateFileList() {
+            const fileList = document.getElementById('fileList');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            fileList.innerHTML = '';
+            
+            if (uploadedFiles.length === 0) {
+                fileList.innerHTML = '<li class="no-data">No files uploaded yet</li>';
+                if (clearAllBtn) clearAllBtn.style.display = 'none';
+                return;
+            }
+            
+            // Show the Clear All button when there are files
+            if (clearAllBtn) clearAllBtn.style.display = 'block';
+            
+            uploadedFiles.forEach((file, index) => {
+                const subject = subjects.find(s => s.id === file.subject);
+                const li = document.createElement('li');
+                li.className = 'file-item';
+                li.innerHTML = `
+                    <div class="file-info">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-school">${file.school || 'Unknown School'}</span>
+                        <span class="file-subject">${subject ? subject.name : 'Unknown'}</span>
+                    </div>
+                    <div class="file-actions">
+                        <button class="delete-btn" data-index="${index}">Remove</button>
+                    </div>
+                `;
+                fileList.appendChild(li);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const fileIndex = parseInt(this.getAttribute('data-index'));
+                    removeFile(fileIndex);
+                });
+            });
+        }
+
+        // Remove a file from the uploaded files
+        // Confirm and clear all data
+        function confirmClearAll() {
+            if (confirm('Are you sure you want to clear all uploaded files and reset the dashboard? This action cannot be undone.')) {
+                clearAllData();
+            }
+        }
+
+        // Clear all data and reset dashboard
+        function clearAllData() {
+            // Clear all data
+            uploadedFiles = [];
+            uploadedData = {};
+            currentSubject = null;
+            schoolPerformance = {};
+            
+            // Reset subject performance
+            subjects.forEach(subject => {
+                subjectPerformance[subject.id] = {
+                    name: subject.name,
+                    average: 0,
+                    uploaded: false
+                };
+            });
+            
+            // Clear localStorage
+            clearState();
+            
+            // Clear the new localStorage data
+            localStorage.removeItem('examDashboardData');
+            
+            // Update UI
+            updateFileList();
+            updateSubjectComparison();
+            
+            // Reset all subject status indicators
+            subjects.forEach(subject => {
+                updateSubjectStatus(subject.id);
+            });
+            
+            // Remove active state from all subject cards
+            document.querySelectorAll('.subject-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Show no data message
+            document.getElementById('noDataMessage').style.display = 'block';
+            document.getElementById('analyticsContent').style.display = 'none';
+            document.getElementById('currentSubject').textContent = 'Select a Subject';
+            document.getElementById('examDate').textContent = '';
+            
+            // Clear school comparison
+            updateSchoolComparison();
+            
+            console.log('All data cleared');
+        }
+
+        // Remove a single file
+        function removeFile(fileIndex) {
+            if (fileIndex < 0 || fileIndex >= uploadedFiles.length) return;
+            
+            const fileToRemove = uploadedFiles[fileIndex];
+            const subjectId = fileToRemove.subject;
+            const schoolName = fileToRemove.school;
+            
+            // Remove from uploaded files array
+            uploadedFiles.splice(fileIndex, 1);
+            
+            // Check if there are other files for this subject
+            const hasOtherFilesForSubject = uploadedFiles.some(file => file.subject === subjectId);
+            if (!hasOtherFilesForSubject) {
+                // No more files for this subject - clear subject data
+                uploadedData[subjectId] = null;
+                subjectPerformance[subjectId].uploaded = false;
+                subjectPerformance[subjectId].average = 0;
+                
+                // Update subject status indicator
+                updateSubjectStatus(subjectId);
+            } else {
+                // There are still files for this subject - recalculate the average
+                updateSubjectPerformance(subjectId, null);
+            }
+            
+            // Handle school performance updates
+            const hasOtherFilesForSchool = uploadedFiles.some(file => file.school === schoolName);
+            if (!hasOtherFilesForSchool && schoolPerformance[schoolName]) {
+                // No more files for this school - remove it
+                delete schoolPerformance[schoolName];
+            } else if (schoolPerformance[schoolName]) {
+                // Still have files for this school - need to recalculate
+                // First, recalculate this school's performance for the affected subject
+                const schoolSubjectFiles = uploadedFiles.filter(file => 
+                    file.school === schoolName && file.subject === subjectId
+                );
+                
+                if (schoolSubjectFiles.length === 0) {
+                    // No more files for this subject at this school
+                    delete schoolPerformance[schoolName].subjects[subjectId];
+                } else {
+                    // Recalculate average for this subject at this school
+                    let totalPerformance = 0;
+                    let validFileCount = 0;
+                    
+                    schoolSubjectFiles.forEach(file => {
+                        const fileData = file.data;
+                        if (!fileData || !fileData.sections) return;
+                        
+                        // PRIORITY 1: Use totalOverallIndex from TOTAL row if available
+                        if (fileData.totalOverallIndex !== undefined && fileData.totalOverallIndex !== null) {
+                            totalPerformance += fileData.totalOverallIndex;
+                            validFileCount++;
+                        } else {
+                            // FALLBACK: Calculate from individual questions
+                            let allQuestions = [];
+                            fileData.sections.forEach(section => {
+                                allQuestions = allQuestions.concat(section.questions);
+                            });
+                            
+                            if (allQuestions.length > 0) {
+                                const filePerformance = allQuestions.reduce((sum, q) => sum + q.overallIndex, 0) / allQuestions.length;
+                                totalPerformance += filePerformance;
+                                validFileCount++;
+                            }
+                        }
+                    });
+                    
+                    if (validFileCount > 0) {
+                        schoolPerformance[schoolName].subjects[subjectId] = roundUpToWhole(totalPerformance / validFileCount);
+                    }
+                }
+                
+                // Recalculate overall school average across all remaining subjects
+                const remainingSubjects = Object.keys(schoolPerformance[schoolName].subjects);
+                if (remainingSubjects.length > 0) {
+                    const totalSubjectPerformance = Object.values(schoolPerformance[schoolName].subjects).reduce((sum, perf) => sum + perf, 0);
+                    schoolPerformance[schoolName].overallAverage = roundUpToWhole(totalSubjectPerformance / remainingSubjects.length);
+                } else {
+                    delete schoolPerformance[schoolName];
+                }
+            }
+            
+            // Update the file list
+            updateFileList();
+            
+            // Update charts
+            updateSubjectComparison();
+            
+            // If the current subject was removed, show no data message
+            if (currentSubject === subjectId && !hasOtherFilesForSubject) {
+                document.getElementById('noDataMessage').style.display = 'block';
+                document.getElementById('analyticsContent').style.display = 'none';
+            } else if (currentSubject === subjectId) {
+                // If there are still files for this subject, refresh the analytics
+                showAnalytics(subjectId);
+            }
+            
+            // If we're on the school comparison tab, update it
+            if (document.querySelector('.tab[data-tab="school-comparison"]').classList.contains('active')) {
+                updateSchoolComparison();
+            }
+            
+            // Save state to localStorage
+            saveState();
+            
+            // Save to localStorage
+            saveToLocalStorage();
+        }
+
+        // IMPROVED Subject detection
+        function determineSubject(filename) {
+            const lowerFilename = filename.toLowerCase();
+            console.log("Determining subject for filename:", filename, "Lowercase:", lowerFilename);
+            
+            // Remove common file extensions and dates but KEEP p1/p2 indicators
+            const cleanName = lowerFilename
+                .replace('.xlsx', '')
+                .replace('.xls', '')
+                .replace(/^[\d._-]+/, '') // Remove leading dates and separators
+                .replace(/[\d._-]+$/, '') // Remove trailing dates and separators  
+                .replace(/[._]/g, ' ') // Replace dots and underscores with spaces
+                .replace(/\s+/g, ' ') // Normalize multiple spaces
+                .trim();
+            
+            console.log("Cleaned filename:", cleanName);
+            
+            // Check for each subject with multiple patterns (matching the subject IDs in the subjects array)
+            // ORDER MATTERS: Check more specific patterns first to avoid false matches
+            const subjectPatterns = {
+                'afrikaans_hl': ['afrikaans', 'afr hl', 'afrikaans hl'],
+                'isixhosa_hl': ['isixhosa', 'xhosa', 'xho', 'isixhosa hl'],
+                'natural_sciences': ['natural science', 'natural sciences', 'natsci', 'nat sci'],
+                'ss_geography': ['ss geography', 'geography', 'geo'],
+                'ss_history': ['ss history', 'history', 'hist'],
+                'english_fal': ['english fal', 'english', 'eng fal', 'fal'],
+                'math_p1': ['math p1', 'mathp1', 'mathematics p1', 'math paper 1'],
+                'math_p2': ['math p2', 'mathp2', 'mathematics p2', 'math paper 2'],
+                'ems': ['ems', 'economic', 'economics', 'econ']
+            };
+            
+            // Check for exact matches first
+            for (const [subjectId, patterns] of Object.entries(subjectPatterns)) {
+                for (const pattern of patterns) {
+                    if (cleanName.includes(pattern)) {
+                        console.log(`Matched ${subjectId} with pattern: ${pattern}`);
+                        return subjectId;
+                    }
+                }
+            }
+            
+            // Check for partial matches in the original filename
+            for (const [subjectId, patterns] of Object.entries(subjectPatterns)) {
+                for (const pattern of patterns) {
+                    if (lowerFilename.includes(pattern)) {
+                        console.log(`Matched ${subjectId} with pattern in original: ${pattern}`);
+                        return subjectId;
+                    }
+                }
+            }
+            
+            // Final fallback: check with underscores replaced by spaces
+            const cleanNameWithSpaces = lowerFilename
+                .replace('.xlsx', '')
+                .replace('.xls', '')
+                .replace(/_/g, ' ')
+                .trim();
+                
+            for (const [subjectId, patterns] of Object.entries(subjectPatterns)) {
+                for (const pattern of patterns) {
+                    if (cleanNameWithSpaces.includes(pattern)) {
+                        console.log(`Matched ${subjectId} with pattern in underscore-cleaned: ${pattern}`);
+                        return subjectId;
+                    }
+                }
+            }
+            
+            console.log("Could not determine subject for:", filename);
+            console.log("Available patterns:", subjectPatterns);
+            return null;
+        }
+
+        // Update subject upload status
+        function updateSubjectStatus(subjectId) {
+            const subjectCard = document.querySelector(`.subject-card[data-id="${subjectId}"]`);
+            if (subjectCard) {
+                const statusIndicator = subjectCard.querySelector('.upload-status');
+                if (uploadedData[subjectId]) {
+                    statusIndicator.classList.add('uploaded');
+                } else {
+                    statusIndicator.classList.remove('uploaded');
+                }
+            }
+        }
+
+        // Select a subject
+        function selectSubject(subjectId) {
+            console.log("Selecting subject:", subjectId);
+            
+            // Update active card
+            document.querySelectorAll('.subject-card').forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.id === subjectId) {
+                    card.classList.add('active');
+                }
+            });
+            
+            // Update current subject
+            currentSubject = subjectId;
+            const subject = subjects.find(s => s.id === subjectId);
+            
+            // Update subject header
+            document.getElementById('currentSubject').textContent = subject.name;
+            document.getElementById('examDate').textContent = `Exam Date: ${subject.date}`;
+            
+            // Reset tabs to overview when switching subjects
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Set overview tab as active
+            document.querySelector('.tab[data-tab="overview"]').classList.add('active');
+            document.getElementById('overview-tab').classList.add('active');
+            
+            // Show analytics if data exists
+            if (uploadedData[subjectId]) {
+                console.log(`Showing analytics for ${subjectId}`);
+                showAnalytics(subjectId);
+                // Update school comparison for this subject
+                updateSchoolComparison();
+            } else {
+                console.log(`No data for ${subjectId}`);
+                document.getElementById('noDataMessage').style.display = 'block';
+                document.getElementById('analyticsContent').style.display = 'none';
+                // Still update school comparison to show proper message
+                updateSchoolComparison();
+            }
+            
+            // Save state to localStorage
+            saveState();
+        }
+
+        // Show analytics for selected subject
+        function showAnalytics(subjectId) {
+            const data = uploadedData[subjectId];
+            if (!data || !data.sections || data.sections.length === 0) {
+                console.log(`No valid data for ${subjectId}`);
+                document.getElementById('noDataMessage').style.display = 'block';
+                document.getElementById('analyticsContent').style.display = 'none';
+                return;
+            }
+            
+            console.log(`Displaying analytics for ${subjectId} with ${data.sections.length} sections`);
+            
+            document.getElementById('noDataMessage').style.display = 'none';
+            document.getElementById('analyticsContent').style.display = 'block';
+            
+            // Calculate overall statistics
+            let allQuestions = [];
+            data.sections.forEach(section => {
+                allQuestions = allQuestions.concat(section.questions);
+            });
+            
+            const top3Avg = roundUpToWhole(allQuestions.reduce((sum, q) => sum + q.top3Avg, 0) / allQuestions.length);
+            const mid3Avg = roundUpToWhole(allQuestions.reduce((sum, q) => sum + q.mid3Avg, 0) / allQuestions.length);
+            const bottom3Avg = roundUpToWhole(allQuestions.reduce((sum, q) => sum + q.bottom3Avg, 0) / allQuestions.length);
+            const overallIndex = roundUpToWhole(allQuestions.reduce((sum, q) => sum + q.overallIndex, 0) / allQuestions.length);
+            
+            console.log(`Calculated averages - Top: ${top3Avg}%, Mid: ${mid3Avg}%, Bottom: ${bottom3Avg}%, Overall: ${overallIndex}%`);
+            
+            // Update statistics
+            document.getElementById('top3Avg').textContent = top3Avg + '%';
+            document.getElementById('mid3Avg').textContent = mid3Avg + '%';
+            document.getElementById('bottom3Avg').textContent = bottom3Avg + '%';
+            document.getElementById('overallIndex').textContent = overallIndex + '%';
+            
+            // Create charts
+            createPerformanceChart(allQuestions);
+            createSectionChart(data.sections);
+            
+            // Update item analysis
+            updateItemAnalysis(allQuestions);
+            
+            // Update detailed results table
+            updateResultsTable(data.sections);
+        }
+
+        // Create performance distribution chart
+        function createPerformanceChart(questions) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+            
+            // Prepare data for the chart
+            const performanceRanges = {
+                '0-20%': 0,
+                '21-40%': 0,
+                '41-60%': 0,
+                '61-80%': 0,
+                '81-100%': 0
+            };
+            
+            questions.forEach(q => {
+                const performance = q.overallIndex;
+                if (performance <= 20) performanceRanges['0-20%']++;
+                else if (performance <= 40) performanceRanges['21-40%']++;
+                else if (performance <= 60) performanceRanges['41-60%']++;
+                else if (performance <= 80) performanceRanges['61-80%']++;
+                else performanceRanges['81-100%']++;
+            });
+            
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(performanceRanges),
+                    datasets: [{
+                        label: 'Number of Questions',
+                        data: Object.values(performanceRanges),
+                        backgroundColor: [
+                            '#e74c3c', '#f39c12', '#f1c40f', '#2ecc71', '#3498db'
+                        ],
+                        borderColor: '#2c3e50',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Question Performance Distribution'
+                        },
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return value;
+                            },
+                            color: '#2c3e50',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Questions'
+                            },
+                            ticks: {
+                                precision: 0
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Performance Range'
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        // Create section performance chart
+        function createSectionChart(sections) {
+            const ctx = document.getElementById('sectionChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (sectionChart) {
+                sectionChart.destroy();
+            }
+            
+            // Prepare data for the chart
+            const sectionNames = sections.map(s => s.name);
+            const sectionAverages = sections.map(s => {
+                const avg = s.questions.reduce((sum, q) => sum + q.overallIndex, 0) / s.questions.length;
+                return roundUpToWhole(avg);
+            });
+            
+            sectionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sectionNames,
+                    datasets: [{
+                        label: 'Section Average (%)',
+                        data: sectionAverages,
+                        backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                        borderColor: 'rgba(52, 152, 219, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Section Performance Averages'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return value + '%';
+                            },
+                            color: '#2c3e50',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Average Performance (%)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+        }
+
+        // Update school comparison chart and statistics
+        function updateSchoolComparison() {
+            const ctx = document.getElementById('schoolChart').getContext('2d');
+            
+            // Destroy existing chart if it exists
+            if (schoolChart) {
+                schoolChart.destroy();
+            }
+            
+            // If no subject is selected, show message
+            if (!currentSubject) {
+                const canvas = document.getElementById('schoolChart');
+                canvas.style.display = 'none';
+                const container = canvas.parentElement;
+                if (!document.getElementById('schoolChartPlaceholder')) {
+                    const placeholder = document.createElement('p');
+                    placeholder.id = 'schoolChartPlaceholder';
+                    placeholder.className = 'no-data';
+                    placeholder.textContent = 'Select a subject from the sidebar to compare school performance for that subject';
+                    container.appendChild(placeholder);
+                }
+                document.getElementById('topSchool').textContent = '-';
+                document.getElementById('bottomSchool').textContent = '-';
+                document.getElementById('avgSchoolScore').textContent = '-';
+                document.getElementById('schoolCount').textContent = '0';
+                document.getElementById('schoolComparisonDescription').textContent = 'Select a subject to compare school performance';
+                return;
+            }
+            
+            // Remove placeholder if it exists
+            const placeholder = document.getElementById('schoolChartPlaceholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            document.getElementById('schoolChart').style.display = 'block';
+            
+            // Get the subject name for the description
+            const subjectObj = subjects.find(s => s.id === currentSubject);
+            const subjectName = subjectObj ? subjectObj.name : 'this subject';
+            
+            // Update description
+            document.getElementById('schoolComparisonDescription').textContent = 
+                `Comparing ${subjectName} performance across different schools`;
+            
+            // Filter uploaded files to only include current subject
+            const subjectFiles = uploadedFiles.filter(file => file.subject === currentSubject);
+            
+            if (subjectFiles.length === 0) {
+                const canvas = document.getElementById('schoolChart');
+                canvas.style.display = 'none';
+                const container = canvas.parentElement;
+                const noData = document.createElement('p');
+                noData.className = 'no-data';
+                noData.textContent = `No ${subjectName} data from multiple schools. Upload ${subjectName} files from different schools to see comparison.`;
+                container.appendChild(noData);
+                document.getElementById('topSchool').textContent = '-';
+                document.getElementById('bottomSchool').textContent = '-';
+                document.getElementById('avgSchoolScore').textContent = '-';
+                document.getElementById('schoolCount').textContent = '0';
+                return;
+            }
+            
+            // Calculate average performance for each school for this subject only
+            const schoolData = {};
+            subjectFiles.forEach(file => {
+                const schoolName = file.school;
+                const data = file.data;
+                
+                let average = 0;
+                
+                // PRIORITY 1: Use totalOverallIndex from TOTAL row if available
+                if (data.totalOverallIndex !== undefined && data.totalOverallIndex !== null) {
+                    average = data.totalOverallIndex;
+                } else {
+                    // FALLBACK: Calculate from individual questions
+                    let allQuestions = [];
+                    data.sections.forEach(section => {
+                        allQuestions = allQuestions.concat(section.questions);
+                    });
+                    
+                    if (allQuestions.length > 0) {
+                        average = allQuestions.reduce((sum, q) => sum + q.overallIndex, 0) / allQuestions.length;
+                    }
+                }
+                
+                if (average > 0) {
+                    // If we already have data for this school, average it
+                    if (schoolData[schoolName]) {
+                        schoolData[schoolName].total += average;
+                        schoolData[schoolName].count += 1;
+                    } else {
+                        schoolData[schoolName] = {
+                            total: average,
+                            count: 1
+                        };
+                    }
+                }
+            });
+            
+            // Calculate final averages
+            const schoolNames = Object.keys(schoolData);
+            const schoolAverages = schoolNames.map(name => 
+                roundUpToWhole(schoolData[name].total / schoolData[name].count)
+            );
+            
+            if (schoolNames.length === 0) {
+                document.getElementById('schoolChart').innerHTML = '<p class="no-data">No school data available.</p>';
+                document.getElementById('topSchool').textContent = '-';
+                document.getElementById('bottomSchool').textContent = '-';
+                document.getElementById('avgSchoolScore').textContent = '-';
+                document.getElementById('schoolCount').textContent = '0';
+                return;
+            }
+            
+            // Create chart
+            schoolChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: schoolNames,
+                    datasets: [{
+                        label: `${subjectName} Performance (%)`,
+                        data: schoolAverages,
+                        backgroundColor: schoolAverages.map(score => {
+                            if (score >= 80) return 'rgba(46, 204, 113, 0.7)';
+                            if (score >= 70) return 'rgba(52, 152, 219, 0.7)';
+                            if (score >= 60) return 'rgba(243, 156, 18, 0.7)';
+                            return 'rgba(231, 76, 60, 0.7)';
+                        }),
+                        borderColor: schoolAverages.map(score => {
+                            if (score >= 80) return 'rgba(46, 204, 113, 1)';
+                            if (score >= 70) return 'rgba(52, 152, 219, 1)';
+                            if (score >= 60) return 'rgba(243, 156, 18, 1)';
+                            return 'rgba(231, 76, 60, 1)';
+                        }),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${subjectName} Performance by School`
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        },
+                        datalabels: {
+                            anchor: 'end',
+                            align: 'top',
+                            formatter: function(value) {
+                                return value + '%';
+                            },
+                            color: '#2c3e50',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Average Performance (%)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
+            
+            // Update school comparison statistics
+            const topSchoolIndex = schoolAverages.indexOf(Math.max(...schoolAverages));
+            const bottomSchoolIndex = schoolAverages.indexOf(Math.min(...schoolAverages));
+            const avgSchoolScore = roundUpToWhole(schoolAverages.reduce((sum, score) => sum + score, 0) / schoolAverages.length);
+            
+            document.getElementById('topSchool').textContent = schoolNames[topSchoolIndex];
+            document.getElementById('topSchoolScore').textContent = schoolAverages[topSchoolIndex] + '%';
+            document.getElementById('bottomSchool').textContent = schoolNames[bottomSchoolIndex];
+            document.getElementById('bottomSchoolScore').textContent = schoolAverages[bottomSchoolIndex] + '%';
+            document.getElementById('avgSchoolScore').textContent = avgSchoolScore + '%';
+            document.getElementById('schoolCount').textContent = schoolNames.length;
+        }
+
+        // Update item analysis
+        function updateItemAnalysis(questions) {
+            const questionGrid = document.getElementById('questionGrid');
+            questionGrid.innerHTML = '';
+            
+            if (questions.length === 0) {
+                questionGrid.innerHTML = '<p>No question data available.</p>';
+                return;
+            }
+            
+            questions.forEach(question => {
+                const questionCard = document.createElement('div');
+                questionCard.className = 'question-card';
+                questionCard.innerHTML = `
+                    <div class="question-number">${question.number}</div>
+                    <div>Marks: <strong>${question.marks}</strong></div>
+                    <div>Top 3: <strong>${question.top3Avg}%</strong></div>
+                    <div>Mid 3: <strong>${question.mid3Avg}%</strong></div>
+                    <div>Bottom 3: <strong>${question.bottom3Avg}%</strong></div>
+                    <div class="question-stats">
+                        <span>Overall: ${question.overallIndex}%</span>
+                        <span class="performance-badge ${getPerformanceClass(question.overallIndex)}">${getPerformanceLevel(question.overallIndex)}</span>
+                    </div>
+                `;
+                questionGrid.appendChild(questionCard);
+            });
+        }
+
+        // Update results table
+        function updateResultsTable(sections) {
+            const resultsBody = document.getElementById('resultsBody');
+            resultsBody.innerHTML = '';
+            
+            sections.forEach(section => {
+                // Add section header
+                const sectionRow = document.createElement('tr');
+                sectionRow.style.backgroundColor = '#f8f9fa';
+                sectionRow.innerHTML = `
+                    <td colspan="7" style="font-weight: bold; padding: 12px;">${section.name}</td>
+                `;
+                resultsBody.appendChild(sectionRow);
+                
+                // Add questions for this section
+                section.questions.forEach(question => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${section.name}</td>
+                        <td>${question.number}</td>
+                        <td>${question.marks}</td>
+                        <td>${question.top3Avg}%</td>
+                        <td>${question.mid3Avg}%</td>
+                        <td>${question.bottom3Avg}%</td>
+                        <td>${question.overallIndex}%</td>
+                    `;
+                    resultsBody.appendChild(tr);
+                });
+            });
+        }
+
+        // Helper function to get performance level
+        function getPerformanceLevel(percentage) {
+            if (percentage >= 80) return 'Excellent';
+            if (percentage >= 70) return 'Good';
+            if (percentage >= 60) return 'Average';
+            if (percentage >= 50) return 'Satisfactory';
+            return 'Needs Improvement';
+        }
+
+        // Helper function to get performance class
+        function getPerformanceClass(percentage) {
+            if (percentage >= 80) return 'excellent';
+            if (percentage >= 70) return 'good';
+            if (percentage >= 60) return 'average';
+            return 'poor';
+        }
+
+        // Initialize the dashboard when the page loads
+        window.addEventListener('DOMContentLoaded', initDashboard);
+    </script>
+
+</body>
+</html>
